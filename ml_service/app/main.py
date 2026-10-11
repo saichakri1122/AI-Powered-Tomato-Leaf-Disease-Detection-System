@@ -6,6 +6,7 @@ from fastapi.responses import JSONResponse
 
 from app.model_loader import load_models
 from app.predictor import predict_image
+from fastapi.middleware.cors import CORSMiddleware
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 ALLOWED_CONTENT_TYPES = {
@@ -39,7 +40,16 @@ app = FastAPI(
     version="1.0.0",
     lifespan=lifespan,
 )
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def home():
