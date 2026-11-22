@@ -1,7 +1,9 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import { diseaseInfo } from "@/data/Diseaseinformations";
+import VoiceAssistant from "../components/voice-assistance/VoiceAssistant";
 
 const API_URL = "http://127.0.0.1:8000/predict";
 
@@ -155,12 +157,10 @@ export default function HomePage() {
   const [preview, setPreview] = useState("");
   const [prediction, setPrediction] = useState<Prediction | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [listening, setListening] = useState(false);
   const [error, setError] = useState("");
 
   const uploadRef = useRef<HTMLInputElement>(null);
   const cameraRef = useRef<HTMLInputElement>(null);
-  const recognitionRef = useRef<{ stop: () => void } | null>(null);
 
   const text = translations[language];
 
@@ -177,10 +177,6 @@ export default function HomePage() {
     }
 
     setReady(true);
-
-    return () => {
-      recognitionRef.current?.stop();
-    };
   }, []);
 
   useEffect(() => {
@@ -250,87 +246,11 @@ export default function HomePage() {
     }
   }
 
-  function toggleVoice() {
-    if (listening) {
-      recognitionRef.current?.stop();
-      setListening(false);
-      return;
-    }
-
-    type SpeechRecognitionLike = {
-      lang: string;
-      continuous: boolean;
-      interimResults: boolean;
-      onresult: ((event: {
-        results: ArrayLike<ArrayLike<{ transcript: string }>>;
-      }) => void) | null;
-      onend: (() => void) | null;
-      onerror: (() => void) | null;
-      start: () => void;
-      stop: () => void;
-    };
-
-    const speechWindow = window as unknown as {
-      SpeechRecognition?: new () => SpeechRecognitionLike;
-      webkitSpeechRecognition?: new () => SpeechRecognitionLike;
-    };
-
-    const SpeechRecognition =
-      speechWindow.SpeechRecognition ||
-      speechWindow.webkitSpeechRecognition;
-
-    if (!SpeechRecognition) {
-      setError(text.voiceUnsupported);
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-
-    recognition.lang =
-      language === "hi"
-        ? "hi-IN"
-        : language === "te"
-          ? "te-IN"
-          : language === "ta"
-            ? "ta-IN"
-            : "en-IN";
-
-    recognition.continuous = false;
-    recognition.interimResults = false;
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript;
-
-      if (transcript && "speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(transcript);
-        utterance.lang = recognition.lang;
-        window.speechSynthesis.speak(utterance);
-      }
-    };
-
-    recognition.onend = () => setListening(false);
-
-    recognition.onerror = () => {
-      setListening(false);
-      setError(text.voiceUnsupported);
-    };
-
-    recognitionRef.current = recognition;
-
-    try {
-      recognition.start();
-      setListening(true);
-      setError("");
-    } catch {
-      setListening(false);
-      setError(text.voiceUnsupported);
-    }
-  }
-
   if (!ready) {
     return <main className="min-h-screen bg-[#f6f8ef]" />;
   }
-    return (
+
+  return (
     <main className="min-h-screen bg-[#f6f8ef] px-4 py-5 text-[#233c2b] sm:px-8 sm:py-8">
       <div className="mx-auto max-w-5xl">
         <header className="flex items-center justify-between gap-3">
@@ -582,7 +502,10 @@ export default function HomePage() {
                 <span className="text-3xl">💡</span>
 
                 <div>
-                  <h3 className="font-bold text-[#554a30]">{text.tipTitle}</h3>
+                  <h3 className="font-bold text-[#554a30]">
+                    {text.tipTitle}
+                  </h3>
+
                   <p className="mt-2 text-sm leading-6 text-[#82765c]">
                     {text.tip}
                   </p>
@@ -590,27 +513,12 @@ export default function HomePage() {
               </div>
             </section>
 
-            <section className="flex flex-1 flex-col items-center justify-center rounded-[2rem] border border-[#e4ebdd] bg-white p-6 text-center">
-              <h3 className="font-bold">Plant Voice Assistant</h3>
-
-              <p className="mt-2 text-sm text-[#71816e]">
-                {listening ? text.listening : text.voice}
-              </p>
-
-              <button
-                type="button"
-                onClick={toggleVoice}
-                aria-label={listening ? "Stop microphone" : "Activate microphone"}
-                aria-pressed={listening}
-                className={`mt-5 flex h-16 w-16 items-center justify-center rounded-full text-2xl text-white shadow-lg transition ${
-                  listening
-                    ? "animate-pulse bg-red-600"
-                    : "bg-[#477b3e] hover:bg-[#376831]"
-                }`}
-              >
-                {listening ? "■" : "🎙️"}
-              </button>
-            </section>
+            <VoiceAssistant language={language}
+  detectedDisease={
+    prediction?.status === "success"
+      ? prediction.disease
+      : undefined
+  }/>
           </aside>
         </div>
 
