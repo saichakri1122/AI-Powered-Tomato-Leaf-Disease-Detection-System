@@ -2,6 +2,15 @@
 
 An AI-powered agricultural web application designed to identify tomato leaf diseases using Deep Learning. The system combines a two-stage image classification architecture with a multilingual farmer-friendly interface to provide preliminary disease identification and relevant preventive guidance.
 
+### 1. Landing Page
+![Landing Page](Screenshots/Landingpage.png)
+
+### 2. Dashboard
+![Dashboard](Screenshots/Dashboardpage.png)
+
+### 3. Image Upload
+![Image Upload](Screenshots/analyse.png)
+
 ---
 
 ## 📌 Project Overview
